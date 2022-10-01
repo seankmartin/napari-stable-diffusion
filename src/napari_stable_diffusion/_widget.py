@@ -1,17 +1,23 @@
-import torch
 import random
+from math import ceil
 from pathlib import Path
-from torch import autocast
-from diffusers import StableDiffusionPipeline
-from skm_pyutils.plot import GridFig
-from skm_pyutils.path import get_all_files_in_dir
+from typing import TYPE_CHECKING
+
+import matplotlib as mpl
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-import matplotlib as mpl
+import numpy as np
+import torch
 import typer
-from tqdm import tqdm
-from math import ceil
+from diffusers import StableDiffusionPipeline
 from magicgui import magic_factory
+from skm_pyutils.path import get_all_files_in_dir
+from skm_pyutils.plot import GridFig
+from torch import autocast
+from tqdm import tqdm
+
+if TYPE_CHECKING:
+    from napari.types import LayerDataTuple
 
 app = typer.Typer()
 
@@ -34,9 +40,9 @@ def make_model():
 
 
 def infer(pipe, prompt, samples, steps, scale, seed, no_filter):
-    def dummy (images, **kwargs):
+    def dummy(images, **kwargs):
         return images, [False]
-    
+
     if no_filter:
         pipe.safety_checker = dummy
 
@@ -60,11 +66,10 @@ def gen_random(used_seeds):
     return seed
 
 
-def create_images(pipe, prompt, num_images, num_iters, output_dir, no_filter):
-    output_dir.mkdir(exist_ok=True)
-    image_paths = []
+def create_images(pipe, prompt, num_images, num_iters, no_filter):
     max_tries = 6
     used_seeds = []
+    images = []
     for _ in tqdm(range(num_images)):
         tries = 0
         seed = gen_random(used_seeds)
@@ -74,11 +79,8 @@ def create_images(pipe, prompt, num_images, num_iters, output_dir, no_filter):
             seed = gen_random(used_seeds)
             img = infer(pipe, prompt, 1, num_iters, 7.5, seed, no_filter)
             tries += 1
-        img_path = output_dir / f"{seed}.png"
-        img.images[0].save(img_path)
-        image_paths.append(img_path)
-    print(used_seeds)
-
+        images.append(img.images[0])
+    return np.array(images)
 
 def grid_images(dir_, num_images, dpi=200):
     image_paths = get_all_files_in_dir(dir_, ext=".png")[:num_images]
@@ -115,19 +117,22 @@ def grid_images(dir_, num_images, dpi=200):
 def _on_init(self):
     self.pipe = make_model()
 
-@magic_factory(
-    widget_init=_on_init
-)
+
+@magic_factory(widget_init=_on_init)
 def diffusion_widget(
+    self,
     prompt: str,
     num_images: int = 9,
     num_iters: int = 60,
-    overwrite: bool = False,
-    dpi: int = 300,
-    model: bool = True,
     nsfw_filter: bool = True,
-) -> Image:
+) -> "LayerDataTuple":
     output_dir = Path(prompt.replace(" ", "-").replace(":", "_"))
-    if not output_dir.exists() or overwrite:
-        create_images(pipe, prompt, num_images, num_iters, output_dir, no_filter=not nsfw_filter)
-    grid_images(output_dir, num_images, dpi=dpi)
+    data = create_images(
+        self.pipe,
+        prompt,
+        num_images,
+        num_iters,
+        output_dir,
+        no_filter=not nsfw_filter,
+    )
+    return (data, {"name": "Diffusion images"})
