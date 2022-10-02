@@ -5,9 +5,6 @@ contributions:
     - id: napari-stable-diffusion.get_reader
       python_name: napari_stable_diffusion._reader:napari_get_reader
       title: Open data with Stable Diffusion
-    - id: napari-stable-diffusion.write_multiple
-      python_name: napari_stable_diffusion._writer:write_multiple
-      title: Save multi-layer data with Stable Diffusion
     - id: napari-stable-diffusion.write_single_image
       python_name: napari_stable_diffusion._writer:write_single_image
       title: Save image data with Stable Diffusion
@@ -17,18 +14,14 @@ contributions:
     - id: napari-stable-diffusion.diffusion_widget
       python_name: napari_stable_diffusion._widget:diffusion_widget
       title: Make diffusion widget
-    
   readers:
     - command: napari-stable-diffusion.get_reader
       accepts_directories: false
       filename_patterns: ['*.npy']
   writers:
-    - command: napari-stable-diffusion.write_multiple
-      layer_types: ['image*','labels*']
-      filename_extensions: []
     - command: napari-stable-diffusion.write_single_image
       layer_types: ['image']
-      filename_extensions: ['.npy']
+      filename_extensions: ['.png', '.jpg']
   sample_data:
     - command: napari-stable-diffusion.make_sample_data
       display_name: Stable Diffusion

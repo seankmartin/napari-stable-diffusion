@@ -9,6 +9,12 @@ Replace code below according to your needs.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union
+from skm_pyutils.plot import GridFig
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from math import ceil
+from pathlib import Path
 
 if TYPE_CHECKING:
     DataType = Union[Any, Sequence[Any]]
@@ -17,17 +23,37 @@ if TYPE_CHECKING:
 
 def write_single_image(path: str, data: Any, meta: dict) -> List[str]:
     """Writes a single image layer"""
+    print(meta)
 
-    # implement your writer logic here ...
+    mpl.rcParams["figure.subplot.left"] = 0.08
+    mpl.rcParams["figure.subplot.right"] = 0.92
+    mpl.rcParams["figure.subplot.bottom"] = 0.1
+    mpl.rcParams["figure.subplot.top"] = 0.9
 
-    # return path to any file(s) that were successfully written
-    return [path]
+    num_images = data.shape[0]
 
+    if num_images == 4:
+        rows = 2
+        cols = 2
+    else:
+        rows = ceil(num_images / 3)
+        cols = min(num_images, 3)
 
-def write_multiple(path: str, data: List[FullLayerData]) -> List[str]:
-    """Writes multiple layers of different types."""
+    gf = GridFig(
+        rows=rows,
+        cols=cols,
+        size_multiplier_x=2,
+        size_multiplier_y=2,
+        wspace=0.12,
+        hspace=0.12,
+        tight_layout=True,
+    )
+    for d in data:
+        ax = gf.get_next()
+        plt.axis("off")
+        ax.imshow(d)
 
-    # implement your writer logic here ...
+    gf.savefig(path, dpi=300)
+    plt.close(gf.get_fig())
 
-    # return path to any file(s) that were successfully written
     return [path]
