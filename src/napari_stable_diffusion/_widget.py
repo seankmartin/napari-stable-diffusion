@@ -1,138 +1,33 @@
-import random
-from math import ceil
-from pathlib import Path
-from typing import TYPE_CHECKING
-
-import matplotlib as mpl
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
-import typer
-from diffusers import StableDiffusionPipeline
-from magicgui import magic_factory
-from skm_pyutils.path import get_all_files_in_dir
-from skm_pyutils.plot import GridFig
-from torch import autocast
-from tqdm import tqdm
-
-if TYPE_CHECKING:
-    from napari.types import LayerDataTuple
-
-app = typer.Typer()
-
-YOUR_AUTH_CODE = "Can't steal this"
+from magicgui import magicgui
+import napari
+from .widget_functionality import create_images, load_model_func
 
 
-def make_model():
-    model_id = "CompVis/stable-diffusion-v1-4"
-    pipe = StableDiffusionPipeline.from_pretrained(
-        model_id,
-        use_auth_token=YOUR_AUTH_CODE,
-        revision="fp16",
-        torch_dtype=torch.float16,
-        cache_dir="model",
-        resume_download=True,
+def diffusion_widget():
+    @magicgui(
+        call_button=True,
+        load_model_button=dict(widget_type="PushButton", text="Load Model"),
     )
-    pipe = pipe.to("cuda")
-    torch.backends.cudnn.benchmark = True
-    return pipe
+    def widget(
+        load_model_button,
+        prompt: str,
+        num_iters: int = 60,
+        num_images: int = 9,
+        nsfw_filter: bool = True,
+    ):
+        @widget.call_button.changed.connect
+        def run():
+            worker = create_images(widget)
+            worker.returned.connect(display_data)
+            worker.start()
 
+    def display_data():
+        metadata = widget.seeds
+        # TODO don't get a new napari to launch
+        napari.view_image(widget.data, name=widget.prompt.value)
 
-def infer(pipe, prompt, samples, steps, scale, seed, no_filter):
-    def dummy(images, **kwargs):
-        return images, [False]
+    @widget.load_model_button.changed.connect
+    def load_model(event=None):
+        load_model_func(widget)
 
-    if no_filter:
-        pipe.safety_checker = dummy
-
-    generator = torch.Generator(device="cuda").manual_seed(seed)
-
-    with autocast("cuda"):
-        return pipe(
-            [prompt] * samples,
-            num_inference_steps=steps,
-            guidance_scale=scale,
-            generator=generator,
-        )
-
-
-def gen_random(used_seeds):
-    while True:
-        seed = random.randint(0, 18446744073709551615)
-        if seed not in used_seeds:
-            break
-    used_seeds.append(seed)
-    return seed
-
-
-def create_images(pipe, prompt, num_images, num_iters, no_filter):
-    max_tries = 6
-    used_seeds = []
-    images = []
-    for _ in tqdm(range(num_images)):
-        tries = 0
-        seed = gen_random(used_seeds)
-        img = infer(pipe, prompt, 1, num_iters, 7.5, seed, no_filter)
-        while tries < max_tries and img.nsfw_content_detected[0]:
-            print("Detected nsfw content - running again with new seed")
-            seed = gen_random(used_seeds)
-            img = infer(pipe, prompt, 1, num_iters, 7.5, seed, no_filter)
-            tries += 1
-        images.append(img.images[0])
-    return np.array(images)
-
-def grid_images(dir_, num_images, dpi=200):
-    image_paths = get_all_files_in_dir(dir_, ext=".png")[:num_images]
-    mpl.rcParams["figure.subplot.left"] = 0.08
-    mpl.rcParams["figure.subplot.right"] = 0.92
-    mpl.rcParams["figure.subplot.bottom"] = 0.1
-    mpl.rcParams["figure.subplot.top"] = 0.9
-
-    if num_images == 4:
-        rows = 2
-        cols = 2
-    else:
-        rows = ceil(num_images / 3)
-        cols = min(num_images, 3)
-
-    gf = GridFig(
-        rows=rows,
-        cols=cols,
-        size_multiplier_x=2,
-        size_multiplier_y=2,
-        wspace=0.12,
-        hspace=0.12,
-        tight_layout=True,
-    )
-    for p in image_paths:
-        img = mpimg.imread(p)
-        ax = gf.get_next()
-        plt.axis("off")
-        ax.imshow(img)
-    gf.savefig(dir_ / f"{dir_.name}.png", dpi=dpi)
-    plt.close(gf.get_fig())
-
-
-def _on_init(self):
-    self.pipe = make_model()
-
-
-@magic_factory(widget_init=_on_init)
-def diffusion_widget(
-    self,
-    prompt: str,
-    num_images: int = 9,
-    num_iters: int = 60,
-    nsfw_filter: bool = True,
-) -> "LayerDataTuple":
-    output_dir = Path(prompt.replace(" ", "-").replace(":", "_"))
-    data = create_images(
-        self.pipe,
-        prompt,
-        num_images,
-        num_iters,
-        output_dir,
-        no_filter=not nsfw_filter,
-    )
-    return (data, {"name": "Diffusion images"})
+    return widget
