@@ -29,8 +29,7 @@ To install latest development version :
 
 ## Contributing
 
-Contributions are very welcome. Tests can be run with [tox], please ensure
-the coverage at least stays the same before you submit a pull request.
+Contributions are very welcome!
 
 ## License
 
@@ -55,6 +54,5 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 [file an issue]: https://github.com/seankmartin/napari-stable-diffusion/issues
 
 [napari]: https://github.com/napari/napari
-[tox]: https://tox.readthedocs.io/en/latest/
 [pip]: https://pypi.org/project/pip/
 [PyPI]: https://pypi.org/
