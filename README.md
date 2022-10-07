@@ -1,12 +1,5 @@
 # napari-stable-diffusion
 
-[![License BSD-3](https://img.shields.io/pypi/l/napari-stable-diffusion.svg?color=green)](https://github.com/seankmartin/napari-stable-diffusion/raw/main/LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/napari-stable-diffusion.svg?color=green)](https://pypi.org/project/napari-stable-diffusion)
-[![Python Version](https://img.shields.io/pypi/pyversions/napari-stable-diffusion.svg?color=green)](https://python.org)
-[![tests](https://github.com/seankmartin/napari-stable-diffusion/workflows/tests/badge.svg)](https://github.com/seankmartin/napari-stable-diffusion/actions)
-[![codecov](https://codecov.io/gh/seankmartin/napari-stable-diffusion/branch/main/graph/badge.svg)](https://codecov.io/gh/seankmartin/napari-stable-diffusion)
-[![napari hub](https://img.shields.io/endpoint?url=https://api.napari-hub.org/shields/napari-stable-diffusion)](https://napari-hub.org/plugins/napari-stable-diffusion)
-
 Run stable diffusion in napari
 
 ----------------------------------
