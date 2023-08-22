@@ -10,11 +10,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, List, Sequence, Tuple, Union
 from skm_pyutils.plot import GridFig
-import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from math import ceil
-from pathlib import Path
 
 if TYPE_CHECKING:
     DataType = Union[Any, Sequence[Any]]
