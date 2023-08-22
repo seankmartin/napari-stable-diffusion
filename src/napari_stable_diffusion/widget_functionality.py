@@ -7,8 +7,11 @@ from napari.qt.threading import thread_worker
 from napari.utils.notifications import show_info
 from torch import autocast
 from tqdm import tqdm
+import os
 
-YOUR_AUTH_CODE = ""
+YOUR_AUTH_CODE = os.environ.get("HUGGING_FACE_TOKEN")
+if YOUR_AUTH_CODE is None:
+    raise ValueError("You need to set the HUGGING_FACE_TOKEN environment variable")
 
 
 def gen_random(used_seeds):
