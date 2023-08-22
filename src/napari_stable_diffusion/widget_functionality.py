@@ -11,7 +11,7 @@ import os
 
 YOUR_AUTH_CODE = os.environ.get("HUGGING_FACE_TOKEN")
 if YOUR_AUTH_CODE is None:
-    raise ValueError("You need to set the HUGGING_FACE_TOKEN environment variable")
+    YOUR_AUTH_CODE = ""
 
 
 def gen_random(used_seeds):
